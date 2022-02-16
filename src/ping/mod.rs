@@ -2,6 +2,7 @@ mod interval;
 use interval::Interval;
 
 use clap::Parser;
+use clap_verbosity_flag::Verbosity;
 
 #[derive(Debug, Parser)]
 pub struct PingArgs {
@@ -16,7 +17,8 @@ pub struct PingArgs {
     /// Size of the packet.
     #[clap(short, long, default_value_t = 64)]
     size: usize,
+}
 
-    /// hostname to ping.
-    hostname: String,
+pub async fn run(args: PingArgs, verbose: Verbosity) {
+    todo!()
 }
