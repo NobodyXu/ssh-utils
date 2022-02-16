@@ -69,6 +69,8 @@ async fn main() {
     };
 
     match args.subcommand {
-        SubCommand::Ping(ping_args) => ping::run(ping_args, args.verbose, session).await,
+        SubCommand::Ping(ping_args) => ping::run(ping_args, args.verbose, &session).await,
     }
+
+    session.close().await.unwrap();
 }
