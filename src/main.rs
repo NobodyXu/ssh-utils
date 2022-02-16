@@ -60,7 +60,7 @@ async fn main() {
         builder.config_file(config_file);
     }
 
-    let session = match builder.connect(hostname).await {
+    let session = match builder.connect_mux(hostname).await {
         Ok(session) => session,
         Err(error) => {
             eprintln_error!("Failed to connect to {}: {:#?}!", hostname, error);
