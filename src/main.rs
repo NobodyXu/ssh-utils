@@ -1,11 +1,15 @@
 mod ping;
 use ping::{run, PingArgs};
 
+mod interval;
+use interval::Interval;
+
 mod utility;
 use utility::eprintln_error;
 
 use clap::{IntoApp, Parser};
 use clap_verbosity_flag::Verbosity;
+use std::path::PathBuf;
 use std::process::exit;
 
 /// Simple program to greet a person
@@ -15,6 +19,12 @@ struct Args {
     /// Verbosity.
     #[clap(flatten)]
     verbose: Verbosity,
+
+    #[clap(short, long, default_value_t = Interval::from_secs(10))]
+    timeout: Interval,
+
+    #[clap(short = 'F', long)]
+    config_file: Option<PathBuf>,
 
     #[clap(subcommand)]
     subcommand: SubCommand,

@@ -18,7 +18,9 @@ impl FromStr for Interval {
 }
 
 impl Interval {
-    pub const DEFAULT_INTERVAL: Interval = Self(Duration::from_secs(1));
+    pub const fn from_secs(secs: u64) -> Self {
+        Self(Duration::from_secs(secs))
+    }
 }
 
 impl fmt::Display for Interval {
