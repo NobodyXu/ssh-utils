@@ -1,5 +1,5 @@
 mod ping;
-use ping::{run, PingArgs};
+use ping::PingArgs;
 
 mod interval;
 use interval::Interval;
@@ -9,6 +9,7 @@ use utility::eprintln_error;
 
 use clap::{IntoApp, Parser};
 use clap_verbosity_flag::Verbosity;
+use openssh::SessionBuilder;
 use std::path::PathBuf;
 use std::process::exit;
 
@@ -52,5 +53,22 @@ async fn main() {
         }
     };
 
-    println!("{args:#?}");
+    let mut builder = SessionBuilder::default();
+
+    builder.connect_timeout(args.timeout.0);
+    if let Some(config_file) = args.config_file.as_ref() {
+        builder.config_file(config_file);
+    }
+
+    let session = match builder.connect(hostname).await {
+        Ok(session) => session,
+        Err(error) => {
+            eprintln_error!("Failed to connect to {}: {:#?}!", hostname, error);
+            exit(1);
+        }
+    };
+
+    match args.subcommand {
+        SubCommand::Ping(ping_args) => ping::run(ping_args, args.verbose, session).await,
+    }
 }

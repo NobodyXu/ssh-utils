@@ -2,6 +2,7 @@ use super::Interval;
 
 use clap::Parser;
 use clap_verbosity_flag::Verbosity;
+use openssh::Session;
 
 #[derive(Debug, Parser)]
 pub struct PingArgs {
@@ -18,6 +19,6 @@ pub struct PingArgs {
     size: usize,
 }
 
-pub async fn run(args: PingArgs, verbose: Verbosity) {
+pub async fn run(args: PingArgs, verbose: Verbosity, session: Session) {
     todo!()
 }

@@ -23,7 +23,7 @@ macro_rules! eprintln_error {
         crate::utility::eprintln_error_impl(&std::format_args!($fmt))
     };
 
-    ($fmt: expr, $($args: tt) *) => {
+    ($fmt: expr, $($args: tt), *) => {
         crate::utility::eprintln_error_impl(&std::format_args!($fmt, $($args),*))
     };
 }
