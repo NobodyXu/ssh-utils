@@ -1,5 +1,8 @@
 use clap_verbosity_flag::Verbosity;
-use owo_colors::{OwoColorize, Stream::Stderr};
+use owo_colors::{
+    OwoColorize,
+    Stream::{Stderr, Stdout},
+};
 use std::cell::Cell;
 use std::fmt::Arguments;
 use std::mem::ManuallyDrop;
@@ -80,6 +83,8 @@ impl PrintBasedOnVerbosity for Verbosity {
             Some(curr_level) if curr_level >= level => {
                 if level == Level::Error {
                     eprintln_error_impl(args)
+                } else if level == Level::Warn {
+                    print!("{}", args.if_supports_color(Stdout, |args| args.yellow()));
                 } else {
                     print!("{}", args);
                 }
