@@ -1,4 +1,5 @@
 use num_integer::Roots;
+use std::fmt;
 use std::time::Duration;
 
 #[derive(Debug)]
@@ -7,6 +8,16 @@ pub struct Stats {
     max: Duration,
     avg: Duration,
     sd: Duration,
+}
+
+impl fmt::Display for Stats {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "rtt min/avg/max/stdev = {:#?}/{:#?}/{:#?}/{:#?}",
+            self.min, self.avg, self.max, self.sd
+        )
+    }
 }
 
 fn from_micros(micros: u128) -> Duration {
