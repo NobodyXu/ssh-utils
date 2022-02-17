@@ -19,7 +19,7 @@ pub struct PingArgs {
     count: u64,
 
     /// Size of the packet.
-    #[clap(short, long, default_value_t = NonZeroU64::new(256).unwrap())]
+    #[clap(short, long, default_value_t = NonZeroU64::new(56).unwrap())]
     size: NonZeroU64,
 }
 
