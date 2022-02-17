@@ -7,6 +7,9 @@ use interval::Interval;
 mod utility;
 use utility::eprintln_error;
 
+mod ssh_session_builder;
+use ssh_session_builder::SshSessionBuilder;
+
 use clap::{IntoApp, Parser};
 use clap_verbosity_flag::Verbosity;
 use openssh::SessionBuilder;
@@ -60,17 +63,14 @@ async fn main() {
         builder.config_file(config_file);
     }
 
-    let session = match builder.connect_mux(hostname).await {
-        Ok(session) => session,
-        Err(error) => {
-            eprintln_error!("Failed to connect to {}: {:#?}!", hostname, error);
-            exit(1);
-        }
+    let builder = SshSessionBuilder::new(builder, hostname);
+
+    let res = match args.subcommand {
+        SubCommand::Ping(ping_args) => ping::run(ping_args, args.verbose, builder).await,
     };
 
-    match args.subcommand {
-        SubCommand::Ping(ping_args) => ping::run(ping_args, args.verbose, &session).await,
+    if let Err(error) = res {
+        eprintln_error!("Failed to connect to {}: {:#?}!", hostname, error);
+        exit(1);
     }
-
-    session.close().await.unwrap();
 }
