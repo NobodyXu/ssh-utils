@@ -1,27 +1,14 @@
 use clap_verbosity_flag::Verbosity;
+use owo_colors::{OwoColorize, Stream::Stderr};
 use std::cell::Cell;
 use std::fmt::Arguments;
-use std::io::Write;
 use std::mem::ManuallyDrop;
 use std::ops::{Deref, DerefMut};
-use termcolor::{Color, ColorChoice, ColorSpec, StandardStream, WriteColor};
 
 pub use log::Level;
 
 pub fn eprintln_error_impl(args: &Arguments<'_>) {
-    let mut stderr = StandardStream::stderr(ColorChoice::Auto);
-
-    let supports_color = stderr.supports_color();
-
-    if supports_color {
-        let _ = stderr.set_color(ColorSpec::new().set_fg(Some(Color::Red)));
-    }
-
-    writeln!(stderr, "{}", args).unwrap();
-
-    if supports_color {
-        let _ = stderr.reset();
-    }
+    eprintln!("{}", args.if_supports_color(Stderr, |args| args.red()));
 }
 
 macro_rules! eprintln_error {
