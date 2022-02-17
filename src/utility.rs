@@ -19,7 +19,7 @@ macro_rules! eprintln_error {
         crate::utility::eprintln_error_impl(&std::format_args!($fmt))
     };
 
-    ($fmt: expr, $($args: tt), *) => {
+    ($fmt: expr, $($args: expr), *) => {
         crate::utility::eprintln_error_impl(&std::format_args!($fmt, $($args),*))
     };
 }
@@ -113,7 +113,7 @@ macro_rules! println_on_level {
         crate::utility::PrintBasedOnVerbosity::println(&$verbosity, $level, &std::format_args!($fmt))
     };
 
-    ($verbosity:expr, $level:expr, $fmt: expr, $($args: tt), *) => {
+    ($verbosity:expr, $level:expr, $fmt: expr, $($args: expr), *) => {
         crate::utility::PrintBasedOnVerbosity::println(&$verbosity, $level, &std::format_args!($fmt, $($args),*))
     };
 }
@@ -125,7 +125,7 @@ macro_rules! println_if_not_quiet {
         crate::utility::PrintBasedOnVerbosity::println_if_not_quiet(&$verbosity, &std::format_args!($fmt))
     };
 
-    ($verbosity:expr, $fmt: expr, $($args: tt), *) => {
+    ($verbosity:expr, $fmt: expr, $($args: expr), *) => {
         crate::utility::PrintBasedOnVerbosity::println_if_not_quiet(&$verbosity, &std::format_args!($fmt, $($args),*))
     };
 }

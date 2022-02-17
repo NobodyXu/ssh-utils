@@ -2,6 +2,7 @@ use super::{logined, println_if_not_quiet, println_on_level, Level, PingArgs, Ss
 
 use clap_verbosity_flag::Verbosity;
 use openssh::Error;
+use owo_colors::{OwoColorize, Stream::Stdout};
 use std::io;
 use std::time::{Duration, Instant};
 use tokio::signal::ctrl_c;
@@ -34,7 +35,11 @@ pub async fn main_loop(
 
         match res {
             Ok(session) => {
-                println_if_not_quiet!(verbose, "Login failed: seq = {seq}, time = {elapsed:#?}");
+                println_if_not_quiet!(
+                    verbose,
+                    "{}: seq = {seq}, time = {elapsed:#?}",
+                    "Login failed".if_supports_color(Stdout, |text| text.yellow())
+                );
                 stats.push(elapsed);
 
                 return logined::main_loop(args, verbose, session, stats).await;
@@ -43,7 +48,8 @@ pub async fn main_loop(
                 Error::Connect(err) if err.kind() == io::ErrorKind::PermissionDenied => {
                     println_if_not_quiet!(
                         verbose,
-                        "Login failed: seq = {seq}, time = {elapsed:#?}"
+                        "{}: seq = {seq}, time = {elapsed:#?}",
+                        "Login failed".if_supports_color(Stdout, |text| text.yellow())
                     );
                     stats.push(elapsed);
                 }

@@ -4,7 +4,8 @@ mod logined;
 mod stats;
 use stats::Stats;
 
-use super::{println_if_not_quiet, println_on_level, Interval, Level, SshSessionBuilder};
+use super::utility::{println_if_not_quiet, println_on_level, Level};
+use super::{Interval, SshSessionBuilder};
 
 use clap::Parser;
 use clap_verbosity_flag::Verbosity;

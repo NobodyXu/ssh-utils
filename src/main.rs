@@ -5,7 +5,7 @@ mod interval;
 use interval::Interval;
 
 mod utility;
-use utility::{eprintln_error, println_if_not_quiet, println_on_level, Level};
+use utility::eprintln_error;
 
 mod ssh_session_builder;
 use ssh_session_builder::SshSessionBuilder;

@@ -3,6 +3,7 @@ use crate::utility::BorrowCell;
 
 use clap_verbosity_flag::Verbosity;
 use openssh::{ChildStdin, ChildStdout, Error, Session, Stdio};
+use owo_colors::{OwoColorize, Stream::Stdout};
 use std::collections::HashMap;
 use std::time::{Duration, Instant};
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
@@ -71,7 +72,11 @@ async fn main_loop_impl(
 
                 if let Some(instant) = hashmap.borrow().remove(&seq) {
                     let elapsed = instant.elapsed();
-                    println_if_not_quiet!(verbose, "Logined: seq = {seq}, time = {elapsed:#?}");
+                    println_if_not_quiet!(
+                        verbose,
+                        "{}: seq = {seq}, time = {elapsed:#?}",
+                        "Logined".if_supports_color(Stdout, |text| text.green())
+                    );
 
                     stats.push(elapsed);
                 } else {
