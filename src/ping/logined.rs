@@ -7,6 +7,7 @@ use openssh::{ChildStdin, ChildStdout, Error, Session, Stdio};
 use std::collections::HashMap;
 use std::time::Instant;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
+use tokio::signal::ctrl_c;
 use tokio::time::{interval, MissedTickBehavior};
 
 async fn main_loop_impl(
@@ -82,13 +83,24 @@ pub async fn main_loop(args: PingArgs, _verbose: Verbosity, session: Session) ->
     let stdin = child.stdin().take().unwrap();
     let stdout = child.stdout().take().unwrap();
 
-    main_loop_impl(args, stdin, stdout).await?;
+    tokio::select! {
+        res = main_loop_impl(args, stdin, stdout) => {
+            res?;
 
-    let exit_status = child.wait().await?;
+            let exit_status = child.wait().await?;
 
-    if !exit_status.success() {
-        eprintln_error!("Failed to execute cut on remote: {exit_status:#?}");
-    }
+            if !exit_status.success() {
+                eprintln_error!("Failed to execute cut on remote: {exit_status:#?}");
+            }
+
+            Ok::<_, Error>(())
+        },
+
+        _ = ctrl_c() => {
+            child.disconnect().await.map_err(Error::Remote)?;
+            Ok::<_, Error>(())
+        },
+    }?;
 
     session.close().await
 }
