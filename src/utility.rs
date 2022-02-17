@@ -3,10 +3,7 @@ use owo_colors::{
     OwoColorize,
     Stream::{Stderr, Stdout},
 };
-use std::cell::Cell;
 use std::fmt::Arguments;
-use std::mem::ManuallyDrop;
-use std::ops::{Deref, DerefMut};
 
 pub use log::Level;
 
@@ -25,43 +22,6 @@ macro_rules! eprintln_error {
 }
 
 pub(crate) use eprintln_error;
-
-#[repr(transparent)]
-pub struct BorrowCell<T>(Cell<T>);
-
-impl<T> BorrowCell<T> {
-    pub const fn new(value: T) -> Self {
-        Self(Cell::new(value))
-    }
-}
-
-impl<T: Default> BorrowCell<T> {
-    pub fn borrow(&self) -> BorrowedCell<'_, T> {
-        BorrowedCell(self, ManuallyDrop::new(self.0.take()))
-    }
-}
-
-pub struct BorrowedCell<'a, T>(&'a BorrowCell<T>, ManuallyDrop<T>);
-
-impl<T> Deref for BorrowedCell<'_, T> {
-    type Target = T;
-
-    fn deref(&self) -> &Self::Target {
-        &*self.1
-    }
-}
-
-impl<T> DerefMut for BorrowedCell<'_, T> {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut *self.1
-    }
-}
-
-impl<T> Drop for BorrowedCell<'_, T> {
-    fn drop(&mut self) {
-        self.0 .0.set(unsafe { ManuallyDrop::take(&mut self.1) });
-    }
-}
 
 pub trait PrintBasedOnVerbosity {
     /// Print to stdout only if the current log level is higher than `level`.

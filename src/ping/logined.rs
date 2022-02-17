@@ -1,10 +1,8 @@
 use super::{println_if_not_quiet, println_on_level, Level, PingArgs};
-use crate::utility::BorrowCell;
 
 use clap_verbosity_flag::Verbosity;
 use openssh::{ChildStdin, ChildStdout, Error, Session, Stdio};
 use owo_colors::{OwoColorize, Stream::Stdout};
-use std::collections::HashMap;
 use std::time::{Duration, Instant};
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::signal::ctrl_c;
@@ -22,71 +20,60 @@ async fn main_loop_impl(
     let mut interval = interval(args.interval.0);
     interval.set_missed_tick_behavior(MissedTickBehavior::Delay);
 
-    let hashmap = BorrowCell::new(HashMap::with_capacity(10));
+    let mut output_buffer: Vec<u8> = (0..len)
+        .map(|n| (n % (u8::MAX as u64)).try_into().unwrap())
+        .collect();
 
-    // Writing and reading from the remote child is done in parallel since there
-    // is no guarantee on whether the buffer is flushed for every new line.
-    tokio::try_join!(
-        async {
-            let mut buffer: Vec<u8> = (0..len)
-                .map(|n| (n % (u8::MAX as u64)).try_into().unwrap())
-                .collect();
+    *output_buffer.last_mut().unwrap() = b'\n';
 
-            *buffer.last_mut().unwrap() = b'\n';
+    let mut input_buffer: Vec<u8> = (0..len).map(|_n| 0).collect();
 
-            for seq in 0..args.count {
-                let seq_buffer: &mut [u8; 8] = (&mut buffer[..8]).try_into().unwrap();
-                seq_buffer.copy_from_slice(&seq.to_be_bytes());
+    for seq in 0..args.count {
+        let seq_buffer: &mut [u8; 8] = (&mut output_buffer[..8]).try_into().unwrap();
+        seq_buffer.copy_from_slice(&seq.to_be_bytes());
 
-                interval.tick().await;
+        interval.tick().await;
 
-                hashmap.borrow().insert(seq, Instant::now());
+        println_on_level!(
+            verbose,
+            Level::Debug,
+            "Sending message seq = {seq} to remote"
+        );
 
-                println_on_level!(
-                    verbose,
-                    Level::Debug,
-                    "Sending message seq = {seq} to remote"
-                );
-                stdin.write_all(&buffer).await.map_err(Error::ChildIo)?;
-            }
+        let instant = Instant::now();
+        stdin
+            .write_all(&output_buffer)
+            .await
+            .map_err(Error::ChildIo)?;
 
-            Ok::<_, Error>(())
-        },
-        async {
-            let mut buffer: Vec<u8> = (0..len).map(|_n| 0).collect();
+        println_on_level!(verbose, Level::Debug, "Reading from child_stdout");
+        stdout
+            .read_exact(&mut input_buffer)
+            .await
+            .map_err(Error::ChildIo)?;
 
-            for _ in 0..args.count {
-                stdout
-                    .read_exact(&mut buffer)
-                    .await
-                    .map_err(Error::ChildIo)?;
+        let seq_buffer: &mut [u8; 8] = (&mut input_buffer[..8]).try_into().unwrap();
+        let seq_received = u64::from_be_bytes(*seq_buffer);
 
-                let seq_buffer: &mut [u8; 8] = (&mut buffer[..8]).try_into().unwrap();
-                let seq = u64::from_be_bytes(*seq_buffer);
+        println_on_level!(
+            verbose,
+            Level::Debug,
+            "Received message seq = {seq_received} from remote"
+        );
 
-                println_on_level!(
-                    verbose,
-                    Level::Debug,
-                    "Received message seq = {seq} from remote"
-                );
+        if seq == seq_received {
+            let elapsed = instant.elapsed();
+            println_if_not_quiet!(
+                verbose,
+                "{}: seq = {seq}, time = {elapsed:#?}",
+                "Logined".if_supports_color(Stdout, |text| text.green())
+            );
 
-                if let Some(instant) = hashmap.borrow().remove(&seq) {
-                    let elapsed = instant.elapsed();
-                    println_if_not_quiet!(
-                        verbose,
-                        "{}: seq = {seq}, time = {elapsed:#?}",
-                        "Logined".if_supports_color(Stdout, |text| text.green())
-                    );
-
-                    stats.push(elapsed);
-                } else {
-                    println_on_level!(verbose, Level::Warn, "Unexpected packet: seq = {seq}");
-                }
-            }
-
-            Ok::<_, Error>(())
-        },
-    )?;
+            stats.push(elapsed);
+        } else {
+            println_on_level!(verbose, Level::Warn, "Unexpected packet: seq = {seq}");
+        }
+    }
 
     Ok(())
 }
