@@ -70,7 +70,7 @@ async fn main() {
     };
 
     if let Err(error) = res {
-        eprintln_error!("Failed to connect to {}: {:#?}!", hostname, error);
+        eprintln_error!("Failed to ping {}: {:#?}!", hostname, error);
         exit(1);
     }
 }
