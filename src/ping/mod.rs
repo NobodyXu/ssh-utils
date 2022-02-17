@@ -12,7 +12,7 @@ use openssh::Error;
 use std::io;
 use std::num::NonZeroU64;
 
-#[derive(Debug, Parser)]
+#[derive(Debug, Parser, Copy, Clone)]
 pub struct PingArgs {
     /// Interval of pinging in seconds (can be float).
     #[clap(short, long, default_value_t = Interval::from_secs(1))]
@@ -40,7 +40,7 @@ pub async fn run(
     let res = match res {
         Ok(session) => logined::main_loop(args, verbose, session, &mut stats).await,
         Err(error) => match error {
-            Error::Connect(err) if err.kind() == io::ErrorKind::ConnectionRefused => {
+            Error::Connect(err) if err.kind() == io::ErrorKind::PermissionDenied => {
                 login_failed::main_loop(args, verbose, builder, &mut stats).await
             }
             error => Err(error),

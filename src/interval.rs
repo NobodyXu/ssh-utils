@@ -3,7 +3,7 @@ use std::num::ParseFloatError;
 use std::str::FromStr;
 use std::time::Duration;
 
-#[derive(Debug)]
+#[derive(Debug, Copy, Clone)]
 pub struct Interval(pub Duration);
 
 impl FromStr for Interval {
