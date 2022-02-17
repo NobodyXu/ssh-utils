@@ -5,7 +5,7 @@ use crate::utility::BorrowCell;
 use clap_verbosity_flag::Verbosity;
 use openssh::{ChildStdin, ChildStdout, Error, Session, Stdio};
 use std::collections::HashMap;
-use std::time::Instant;
+use std::time::{Duration, Instant};
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::signal::ctrl_c;
 use tokio::time::{interval, MissedTickBehavior};
@@ -14,6 +14,7 @@ async fn main_loop_impl(
     args: PingArgs,
     mut stdin: ChildStdin,
     mut stdout: ChildStdout,
+    stats: &mut Vec<Duration>,
 ) -> Result<(), Error> {
     let len = 8 + args.size.get();
 
@@ -60,6 +61,8 @@ async fn main_loop_impl(
                 if let Some(instant) = hashmap.borrow().remove(&seq) {
                     let elapsed = instant.elapsed();
                     println!("Logined: seq = {seq}, time = {elapsed:#?}");
+
+                    stats.push(elapsed);
                 } else {
                     eprintln_error!("Unexpected packet: seq = {seq}");
                 }
@@ -72,7 +75,13 @@ async fn main_loop_impl(
     Ok(())
 }
 
-pub async fn main_loop(args: PingArgs, _verbose: Verbosity, session: Session) -> Result<(), Error> {
+/// Cancel safe, shutdown gracefully on ctrl_c
+pub async fn main_loop(
+    args: PingArgs,
+    _verbose: Verbosity,
+    session: Session,
+    stats: &mut Vec<Duration>,
+) -> Result<(), Error> {
     let mut child = session
         .command("cat")
         .stdin(Stdio::piped())
@@ -84,7 +93,7 @@ pub async fn main_loop(args: PingArgs, _verbose: Verbosity, session: Session) ->
     let stdout = child.stdout().take().unwrap();
 
     tokio::select! {
-        res = main_loop_impl(args, stdin, stdout) => {
+        res = main_loop_impl(args, stdin, stdout, stats) => {
             res?;
 
             let exit_status = child.wait().await?;

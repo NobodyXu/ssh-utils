@@ -11,4 +11,8 @@ impl<'dest> SshSessionBuilder<'dest> {
     pub async fn connect(&self) -> Result<Session, Error> {
         self.0.connect_mux(self.1).await
     }
+
+    pub fn dest(&self) -> &'dest str {
+        self.1
+    }
 }
