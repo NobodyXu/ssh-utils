@@ -3,7 +3,14 @@ name = "ssh-utils"
 version = "0.1.0"
 edition = "2021"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+authors = ["Jiahao XU <Jiahao_XU@outlook.com>"]
+
+license = "MIT"
+description = "Utilities for ssh."
+repository = "https://github.com/NobodyXu/ssh-utils"
+
+keywords = ["ssh", "network"]
+categories = ["network-programming"]
 
 [dependencies]
 clap = { version = "3.0.14", features = ["derive", "cargo"] }
