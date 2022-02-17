@@ -91,7 +91,11 @@ impl PrintBasedOnVerbosity for Verbosity {
     fn print(&self, level: Level, args: &Arguments<'_>) {
         match self.log_level() {
             Some(curr_level) if curr_level >= level => {
-                print!("{}", args);
+                if level == Level::Error {
+                    eprintln_error_impl(args)
+                } else {
+                    print!("{}", args);
+                }
             }
             _ => (),
         }
