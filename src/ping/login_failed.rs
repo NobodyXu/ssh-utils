@@ -1,4 +1,4 @@
-use super::{logined, println_on_level, Level, PingArgs, SshSessionBuilder};
+use super::{logined, println_if_not_quiet, println_on_level, Level, PingArgs, SshSessionBuilder};
 
 use clap_verbosity_flag::Verbosity;
 use openssh::Error;
@@ -34,14 +34,17 @@ pub async fn main_loop(
 
         match res {
             Ok(session) => {
-                println!("Login failed: seq = {seq}, time = {elapsed:#?}");
+                println_if_not_quiet!(verbose, "Login failed: seq = {seq}, time = {elapsed:#?}");
                 stats.push(elapsed);
 
                 return logined::main_loop(args, verbose, session, stats).await;
             }
             Err(error) => match error {
                 Error::Connect(err) if err.kind() == io::ErrorKind::PermissionDenied => {
-                    println!("Login failed: seq = {seq}, time = {elapsed:#?}");
+                    println_if_not_quiet!(
+                        verbose,
+                        "Login failed: seq = {seq}, time = {elapsed:#?}"
+                    );
                     stats.push(elapsed);
                 }
                 error => return Err(error),

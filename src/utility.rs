@@ -79,6 +79,12 @@ pub trait PrintBasedOnVerbosity {
 
     /// Println to stdout only if the current log level is higher than `level`.
     fn println(&self, level: Level, args: &Arguments<'_>);
+
+    /// Print to stdout only if the current log level is not quiet.
+    fn print_if_not_quiet(&self, args: &Arguments<'_>);
+
+    /// Println to stdout only if the current log level is not quiet.
+    fn println_if_not_quiet(&self, args: &Arguments<'_>);
 }
 
 impl PrintBasedOnVerbosity for Verbosity {
@@ -94,6 +100,16 @@ impl PrintBasedOnVerbosity for Verbosity {
     fn println(&self, level: Level, args: &Arguments<'_>) {
         self.print(level, &std::format_args!("{args}\n"))
     }
+
+    fn print_if_not_quiet(&self, args: &Arguments<'_>) {
+        if self.log_level().is_some() {
+            print!("{}", args);
+        }
+    }
+
+    fn println_if_not_quiet(&self, args: &Arguments<'_>) {
+        self.print_if_not_quiet(&std::format_args!("{args}\n"))
+    }
 }
 
 macro_rules! println_on_level {
@@ -107,3 +123,15 @@ macro_rules! println_on_level {
 }
 
 pub(crate) use println_on_level;
+
+macro_rules! println_if_not_quiet {
+    ($verbosity:expr, $fmt: expr) => {
+        crate::utility::PrintBasedOnVerbosity::println_if_not_quiet(&$verbosity, &std::format_args!($fmt))
+    };
+
+    ($verbosity:expr, $fmt: expr, $($args: tt), *) => {
+        crate::utility::PrintBasedOnVerbosity::println_if_not_quiet(&$verbosity, &std::format_args!($fmt, $($args),*))
+    };
+}
+
+pub(crate) use println_if_not_quiet;

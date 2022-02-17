@@ -1,4 +1,4 @@
-use super::{println_on_level, Level, PingArgs};
+use super::{println_if_not_quiet, println_on_level, Level, PingArgs};
 use crate::utility::BorrowCell;
 
 use clap_verbosity_flag::Verbosity;
@@ -71,7 +71,7 @@ async fn main_loop_impl(
 
                 if let Some(instant) = hashmap.borrow().remove(&seq) {
                     let elapsed = instant.elapsed();
-                    println!("Logined: seq = {seq}, time = {elapsed:#?}");
+                    println_if_not_quiet!(verbose, "Logined: seq = {seq}, time = {elapsed:#?}");
 
                     stats.push(elapsed);
                 } else {
