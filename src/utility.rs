@@ -1,3 +1,4 @@
+use clap_verbosity_flag::Verbosity;
 use std::cell::Cell;
 use std::fmt::Arguments;
 use std::io::Write;
@@ -5,7 +6,9 @@ use std::mem::ManuallyDrop;
 use std::ops::{Deref, DerefMut};
 use termcolor::{Color, ColorChoice, ColorSpec, StandardStream, WriteColor};
 
-pub fn eprintln_error_impl(args: &Arguments) {
+pub use log::Level;
+
+pub fn eprintln_error_impl(args: &Arguments<'_>) {
     let mut stderr = StandardStream::stderr(ColorChoice::Auto);
 
     let supports_color = stderr.supports_color();
@@ -69,3 +72,38 @@ impl<T> Drop for BorrowedCell<'_, T> {
         self.0 .0.set(unsafe { ManuallyDrop::take(&mut self.1) });
     }
 }
+
+pub trait PrintBasedOnVerbosity {
+    /// Print to stdout only if the current log level is higher than `level`.
+    fn print(&self, level: Level, args: &Arguments<'_>);
+
+    /// Println to stdout only if the current log level is higher than `level`.
+    fn println(&self, level: Level, args: &Arguments<'_>);
+}
+
+impl PrintBasedOnVerbosity for Verbosity {
+    fn print(&self, level: Level, args: &Arguments<'_>) {
+        match self.log_level() {
+            Some(curr_level) if curr_level >= level => {
+                print!("{}", args);
+            }
+            _ => (),
+        }
+    }
+
+    fn println(&self, level: Level, args: &Arguments<'_>) {
+        self.print(level, &std::format_args!("{args}\n"))
+    }
+}
+
+macro_rules! println_on_level {
+    ($verbosity:expr, $level:expr, $fmt: expr) => {
+        crate::utility::PrintBasedOnVerbosity::println(&$verbosity, $level, &std::format_args!($fmt))
+    };
+
+    ($verbosity:expr, $level:expr, $fmt: expr, $($args: tt), *) => {
+        crate::utility::PrintBasedOnVerbosity::println(&$verbosity, $level, &std::format_args!($fmt, $($args),*))
+    };
+}
+
+pub(crate) use println_on_level;

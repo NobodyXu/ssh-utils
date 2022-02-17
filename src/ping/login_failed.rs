@@ -1,4 +1,4 @@
-use super::{logined, PingArgs, SshSessionBuilder};
+use super::{logined, println_on_level, Level, PingArgs, SshSessionBuilder};
 
 use clap_verbosity_flag::Verbosity;
 use openssh::Error;
@@ -26,6 +26,7 @@ pub async fn main_loop(
         let res = tokio::select! {
             res = builder.connect() => res,
             _ = &mut shutdown_requested => {
+                println_on_level!(verbose, Level::Debug, "Ctrl C signal received");
                 return Ok(())
             },
         };

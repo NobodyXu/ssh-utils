@@ -4,7 +4,7 @@ mod logined;
 mod stats;
 use stats::Stats;
 
-use super::{Interval, SshSessionBuilder};
+use super::{println_on_level, Interval, Level, SshSessionBuilder};
 
 use clap::Parser;
 use clap_verbosity_flag::Verbosity;
@@ -32,15 +32,21 @@ pub async fn run(
     verbose: Verbosity,
     builder: SshSessionBuilder<'_>,
 ) -> Result<(), Error> {
+    let dest = builder.dest();
+
+    println_on_level!(verbose, Level::Debug, "Attempting to connect to {dest}");
     let res = builder.connect().await;
 
     let mut stats = Vec::new();
-    let dest = builder.dest();
 
     let res = match res {
-        Ok(session) => logined::main_loop(args, verbose, session, &mut stats).await,
+        Ok(session) => {
+            println_on_level!(verbose, Level::Debug, "Successfully login into {dest}");
+            logined::main_loop(args, verbose, session, &mut stats).await
+        }
         Err(error) => match error {
             Error::Connect(err) if err.kind() == io::ErrorKind::PermissionDenied => {
+                println_on_level!(verbose, Level::Debug, "Cannot login to {dest}");
                 login_failed::main_loop(args, verbose, builder, &mut stats).await
             }
             error => Err(error),

@@ -1,5 +1,4 @@
-use super::PingArgs;
-use crate::eprintln_error;
+use super::{println_on_level, Level, PingArgs};
 use crate::utility::BorrowCell;
 
 use clap_verbosity_flag::Verbosity;
@@ -12,6 +11,7 @@ use tokio::time::{interval, MissedTickBehavior};
 
 async fn main_loop_impl(
     args: PingArgs,
+    verbose: Verbosity,
     mut stdin: ChildStdin,
     mut stdout: ChildStdout,
     stats: &mut Vec<Duration>,
@@ -41,6 +41,11 @@ async fn main_loop_impl(
 
                 hashmap.borrow().insert(seq, Instant::now());
 
+                println_on_level!(
+                    verbose,
+                    Level::Debug,
+                    "Sending message seq = {seq} to remote"
+                );
                 stdin.write_all(&buffer).await.map_err(Error::ChildIo)?;
             }
 
@@ -58,13 +63,19 @@ async fn main_loop_impl(
                 let seq_buffer: &mut [u8; 8] = (&mut buffer[..8]).try_into().unwrap();
                 let seq = u64::from_be_bytes(*seq_buffer);
 
+                println_on_level!(
+                    verbose,
+                    Level::Debug,
+                    "Received message seq = {seq} from remote"
+                );
+
                 if let Some(instant) = hashmap.borrow().remove(&seq) {
                     let elapsed = instant.elapsed();
                     println!("Logined: seq = {seq}, time = {elapsed:#?}");
 
                     stats.push(elapsed);
                 } else {
-                    eprintln_error!("Unexpected packet: seq = {seq}");
+                    println_on_level!(verbose, Level::Warn, "Unexpected packet: seq = {seq}");
                 }
             }
 
@@ -78,10 +89,11 @@ async fn main_loop_impl(
 /// Cancel safe, shutdown gracefully on ctrl_c
 pub async fn main_loop(
     args: PingArgs,
-    _verbose: Verbosity,
+    verbose: Verbosity,
     session: Session,
     stats: &mut Vec<Duration>,
 ) -> Result<(), Error> {
+    println_on_level!(verbose, Level::Debug, "Spawning process cat on remote");
     let mut child = session
         .command("cat")
         .stdin(Stdio::piped())
@@ -93,19 +105,20 @@ pub async fn main_loop(
     let stdout = child.stdout().take().unwrap();
 
     tokio::select! {
-        res = main_loop_impl(args, stdin, stdout, stats) => {
+        res = main_loop_impl(args, verbose.clone(), stdin, stdout, stats) => {
             res?;
 
             let exit_status = child.wait().await?;
 
             if !exit_status.success() {
-                eprintln_error!("Failed to execute cut on remote: {exit_status:#?}");
+                println_on_level!(verbose, Level::Warn, "Failed to execute cat on remote: {exit_status:#?}");
             }
 
             Ok::<_, Error>(())
         },
 
         _ = ctrl_c() => {
+            println_on_level!(verbose, Level::Debug, "Ctrl C signal received");
             child.disconnect().await.map_err(Error::Remote)?;
             Ok::<_, Error>(())
         },
