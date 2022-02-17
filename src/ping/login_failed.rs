@@ -33,14 +33,14 @@ pub async fn main_loop(
 
         match res {
             Ok(session) => {
-                println!("Accessible: seq = {seq}, time = {elapsed:#?}");
+                println!("Login failed: seq = {seq}, time = {elapsed:#?}");
                 stats.push(elapsed);
 
                 return logined::main_loop(args, verbose, session, stats).await;
             }
             Err(error) => match error {
                 Error::Connect(err) if err.kind() == io::ErrorKind::PermissionDenied => {
-                    println!("Accessible: seq = {seq}, time = {elapsed:#?}");
+                    println!("Login failed: seq = {seq}, time = {elapsed:#?}");
                     stats.push(elapsed);
                 }
                 error => return Err(error),
