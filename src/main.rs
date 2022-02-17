@@ -10,6 +10,9 @@ use utility::eprintln_error;
 mod ssh_session_builder;
 use ssh_session_builder::SshSessionBuilder;
 
+mod speedtest;
+use speedtest::SpeedTestArgs;
+
 use clap::{IntoApp, Parser};
 use clap_verbosity_flag::Verbosity;
 use openssh::SessionBuilder;
@@ -41,6 +44,7 @@ struct Args {
 #[derive(clap::Subcommand, Debug)]
 enum SubCommand {
     Ping(PingArgs),
+    SpeedTest(SpeedTestArgs),
 }
 
 #[tokio::main(flavor = "current_thread")]
@@ -67,6 +71,9 @@ async fn main() {
 
     let res = match args.subcommand {
         SubCommand::Ping(ping_args) => ping::run(ping_args, args.verbose, builder).await,
+        SubCommand::SpeedTest(speedtest_args) => {
+            speedtest::run(speedtest_args, args.verbose, builder).await
+        }
     };
 
     if let Err(error) = res {
