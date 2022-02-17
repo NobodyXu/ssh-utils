@@ -34,21 +34,21 @@ macro_rules! eprintln_error {
 pub(crate) use eprintln_error;
 
 #[repr(transparent)]
-pub(crate) struct BorrowCell<T>(Cell<T>);
+pub struct BorrowCell<T>(Cell<T>);
 
 impl<T> BorrowCell<T> {
-    pub(crate) const fn new(value: T) -> Self {
+    pub const fn new(value: T) -> Self {
         Self(Cell::new(value))
     }
 }
 
 impl<T: Default> BorrowCell<T> {
-    pub(crate) fn borrow(&self) -> BorrowedCell<'_, T> {
+    pub fn borrow(&self) -> BorrowedCell<'_, T> {
         BorrowedCell(self, ManuallyDrop::new(self.0.take()))
     }
 }
 
-pub(crate) struct BorrowedCell<'a, T>(&'a BorrowCell<T>, ManuallyDrop<T>);
+pub struct BorrowedCell<'a, T>(&'a BorrowCell<T>, ManuallyDrop<T>);
 
 impl<T> Deref for BorrowedCell<'_, T> {
     type Target = T;
