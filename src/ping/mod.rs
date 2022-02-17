@@ -1,4 +1,5 @@
 mod logined;
+mod stats;
 
 use super::{Interval, SshSessionBuilder};
 
