@@ -46,7 +46,7 @@ pub async fn run(
         }
         Err(error) => match error {
             Error::Connect(err) if err.kind() == io::ErrorKind::PermissionDenied => {
-                println_on_level!(verbose, Level::Debug, "Cannot login to {dest}");
+                println_on_level!(verbose, Level::Warn, "Cannot login to {dest}");
                 login_failed::main_loop(args, verbose, builder, &mut stats).await
             }
             error => Err(error),
