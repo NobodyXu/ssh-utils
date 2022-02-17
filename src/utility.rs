@@ -40,10 +40,6 @@ impl<T> BorrowCell<T> {
     pub(crate) const fn new(value: T) -> Self {
         Self(Cell::new(value))
     }
-
-    pub(crate) fn into_inner(self) -> T {
-        self.0.into_inner()
-    }
 }
 
 impl<T: Default> BorrowCell<T> {
