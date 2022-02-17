@@ -3,27 +3,21 @@ use crate::eprintln_error;
 use crate::utility::BorrowCell;
 
 use clap_verbosity_flag::Verbosity;
-use openssh::{Error, Session, Stdio};
+use openssh::{ChildStdin, ChildStdout, Error, Session, Stdio};
 use std::collections::HashMap;
 use std::time::Instant;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::time::{interval, MissedTickBehavior};
 
-pub async fn main_loop(args: PingArgs, _verbose: Verbosity, session: Session) -> Result<(), Error> {
+async fn main_loop_impl(
+    args: PingArgs,
+    mut stdin: ChildStdin,
+    mut stdout: ChildStdout,
+) -> Result<(), Error> {
     let len = 8 + args.size.get();
 
     let mut interval = interval(args.interval.0);
     interval.set_missed_tick_behavior(MissedTickBehavior::Delay);
-
-    let mut child = session
-        .command("cat")
-        .stdin(Stdio::piped())
-        .stdout(Stdio::piped())
-        .spawn()
-        .await?;
-
-    let mut stdin = child.stdin().take().unwrap();
-    let mut stdout = child.stdout().take().unwrap();
 
     let hashmap = BorrowCell::new(HashMap::with_capacity(10));
 
@@ -73,6 +67,22 @@ pub async fn main_loop(args: PingArgs, _verbose: Verbosity, session: Session) ->
             Ok::<_, Error>(())
         },
     )?;
+
+    Ok(())
+}
+
+pub async fn main_loop(args: PingArgs, _verbose: Verbosity, session: Session) -> Result<(), Error> {
+    let mut child = session
+        .command("cat")
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .spawn()
+        .await?;
+
+    let stdin = child.stdin().take().unwrap();
+    let stdout = child.stdout().take().unwrap();
+
+    main_loop_impl(args, stdin, stdout).await?;
 
     let exit_status = child.wait().await?;
 
