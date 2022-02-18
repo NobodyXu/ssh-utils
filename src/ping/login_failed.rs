@@ -42,6 +42,9 @@ pub async fn main_loop(
                 );
                 stats.push(elapsed);
 
+                let mut args = args;
+                args.count -= seq + 1;
+
                 return logined::main_loop(args, verbose, session, stats).await;
             }
             Err(error) => match error {
