@@ -1,6 +1,8 @@
 mod upload;
 use upload::speedtest_upload;
 
+mod human_readable_unit;
+
 use super::utility::{println_on_level, Level};
 use super::SshSessionBuilder;
 

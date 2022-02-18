@@ -1,3 +1,4 @@
+use super::human_readable_unit::HumanReadableUnit;
 use super::{println_on_level, Level};
 
 use clap_verbosity_flag::Verbosity;
