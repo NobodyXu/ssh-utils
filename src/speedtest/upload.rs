@@ -72,7 +72,11 @@ pub async fn speedtest_upload(verbose: Verbosity, session: &Session) -> Result<(
         );
     }
 
-    println!("{n} bytes is uploaded in {elapsed:#?}");
+    println!(
+        "{} is uploaded in {elapsed:#?}, upload speed = {}/s",
+        HumanReadableUnit::new(n),
+        HumanReadableUnit::new(n / elapsed.as_secs())
+    );
 
     Ok(())
 }
