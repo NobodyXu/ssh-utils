@@ -77,7 +77,7 @@ async fn main() {
     };
 
     if let Err(error) = res {
-        eprintln_error!("Failed to ping {}: {:#?}!", hostname, error);
+        eprintln_error!("Failed to login to {}: {:#?}!", hostname, error);
         exit(1);
     }
 }
