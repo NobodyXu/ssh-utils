@@ -1,6 +1,9 @@
 mod upload;
 use upload::speedtest_upload;
 
+mod download;
+use download::speedtest_download;
+
 mod human_readable_unit;
 
 use super::utility::{println_on_level, Level};
@@ -33,6 +36,10 @@ pub async fn run(
 
     if !args.no_upload {
         speedtest_upload(verbose.clone(), &session).await?;
+    }
+
+    if !args.no_download {
+        speedtest_download(verbose, &session).await?;
     }
 
     session.close().await
