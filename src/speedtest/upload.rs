@@ -3,6 +3,7 @@ use super::{println_on_level, Level};
 
 use clap_verbosity_flag::Verbosity;
 use openssh::{ChildStdin, Error, Session, Stdio};
+use std::io;
 use std::time::{Duration, Instant};
 use tokio::io::AsyncWriteExt;
 use tokio::signal::ctrl_c;
@@ -18,6 +19,13 @@ async fn upload(
         println_on_level!(verbose, Level::Debug, "Uploading");
         let cnt = child_stdin.write(buffer).await.map_err(Error::ChildIo)?;
         let cnt: u64 = cnt.try_into().unwrap();
+        if cnt == 0 {
+            return Err(Error::ChildIo(io::Error::new(
+                io::ErrorKind::WriteZero,
+                "Write to child_stdin failed in upload",
+            )));
+        }
+
         *n += cnt;
     }
 }
