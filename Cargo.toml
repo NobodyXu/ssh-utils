@@ -18,7 +18,7 @@ clap-verbosity-flag = "1.0.0"
 log = "0.4.14"
 owo-colors = { version = "3", features = ["supports-colors"] }
 
-openssh = { version = "0.9.0-rc.1", default-features = false, features = ["native-mux"] }
+openssh = { version = "0.9.0-rc.2", default-features = false, features = ["native-mux"] }
 tokio = { version = "1.16.1", features = ["io-util", "macros", "rt", "time", "signal"] }
 num-integer = "0.1.44"
 
