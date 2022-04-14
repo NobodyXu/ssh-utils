@@ -55,7 +55,7 @@ async fn main() {
         Some(hostname) => hostname,
         None => {
             eprintln_error!("ERROR: Expected positional argument hostname!\n");
-            Args::into_app().print_long_help().unwrap();
+            Args::command().print_long_help().unwrap();
             exit(1)
         }
     };
